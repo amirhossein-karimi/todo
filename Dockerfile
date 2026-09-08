@@ -24,6 +24,8 @@ FROM alpine:3.22 AS production
 
 WORKDIR /app
 
+RUN apk add --no-cache ca-certificates
+
 COPY --from=builder /app/server /app/server
 COPY entrypoint.sh /app/entrypoint.sh
 
