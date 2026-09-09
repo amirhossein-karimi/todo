@@ -1,0 +1,42 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+
+	"github.com/amirhossein-karimi/todo/internal/models"
+	"gorm.io/gorm"
+)
+
+type TodoRepository interface {
+	Create(ctx context.Context, todo *models.Todo) (uuid.UUID, error)
+	FindByTitle(ctx context.Context, title string) (*models.Todo, error)
+}
+
+type todoRepository struct {
+	db *gorm.DB
+}
+
+func NewTodoRepository(db *gorm.DB) TodoRepository {
+	return &todoRepository{
+		db: db,
+	}
+}
+
+func (r *todoRepository) Create(ctx context.Context, todo *models.Todo) (uuid.UUID, error) {
+	err := r.db.WithContext(ctx).Create(todo).Error
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return todo.UUID, nil
+}
+
+func (r *todoRepository) FindByTitle(ctx context.Context, title string) (*models.Todo, error) {
+	var todo models.Todo
+	err := r.db.WithContext(ctx).Where("title = ?", title).First(&todo).Error
+	if err != nil {
+		return nil, err
+	}
+	return &todo, nil
+}

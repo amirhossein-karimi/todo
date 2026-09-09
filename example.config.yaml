@@ -3,9 +3,14 @@ server:
   port: 8080
 
 database:
-  host: "postgres"
+  host: "postgresql" # docker container name
   port: 5432
   name: "todo"
   user: "todo_user"
   password: "secret_password"
   sslmode: "disable"
+
+redis:
+  host: "redis" # docker container name
+  port: 6379
+  password: "secret_password"

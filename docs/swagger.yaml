@@ -1,0 +1,53 @@
+basePath: /
+definitions:
+  requests.TodoRequest:
+    properties:
+      description:
+        type: string
+      priority:
+        type: integer
+      title:
+        type: string
+    required:
+    - description
+    - priority
+    - title
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Todo REST API built with Go and Gin.
+  title: Todo API
+  version: "1.0"
+paths:
+  /api/v1/todo/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a new todo item
+      parameters:
+      - description: Todo data
+        in: body
+        name: todo
+        required: true
+        schema:
+          $ref: '#/definitions/requests.TodoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new todo
+      tags:
+      - Todos
+swagger: "2.0"

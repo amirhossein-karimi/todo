@@ -9,7 +9,9 @@ services:
     restart: unless-stopped
 
     depends_on:
-      postgres:
+      postgresql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
     volumes:
@@ -19,7 +21,7 @@ services:
     ports:
       - "8080:8080"
 
-  postgres:
+  postgresql:
     image: postgres:17-alpine
     container_name: todo-postgres
     restart: unless-stopped
@@ -42,5 +44,25 @@ services:
       retries: 5
       start_period: 5s
 
+  redis:
+    image: redis:7-alpine
+    container_name: todo-redis
+    restart: unless-stopped
+
+    ports:
+      - "${REDIS_PORT}:6379"
+
+    volumes:
+      - redis_data:/data
+
+    command: redis-server --appendonly yes
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 volumes:
   postgres_data:
+  redis_data:

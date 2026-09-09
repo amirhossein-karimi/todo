@@ -1,13 +1,13 @@
 CREATE TABLE IF NOT EXISTS todos (
     id BIGSERIAL PRIMARY KEY,
 
-    uuid UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+    uuid UUID NOT NULL UNIQUE,
 
     title VARCHAR(255) NOT NULL,
 
     description TEXT,
 
-    priority INTEGER NOT NULL DEFAULT 0,
+    priority smallint NOT NULL DEFAULT 0,
 
     status smallint NOT NULL DEFAULT 0,
 
