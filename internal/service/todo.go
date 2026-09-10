@@ -7,6 +7,7 @@ import (
 
 	"github.com/amirhossein-karimi/todo/internal/cache"
 	"github.com/amirhossein-karimi/todo/internal/errors"
+	"github.com/amirhossein-karimi/todo/internal/metrics"
 	"github.com/amirhossein-karimi/todo/internal/models"
 	"github.com/amirhossein-karimi/todo/internal/repository"
 	"github.com/amirhossein-karimi/todo/internal/requests"
@@ -47,6 +48,8 @@ func (s *todoService) Delete(ctx context.Context, uuid uuid.UUID) error {
 		return err
 	}
 
+	metrics.TasksCount.Dec()
+
 	return nil
 }
 
@@ -83,6 +86,7 @@ func (s *todoService) Create(ctx context.Context, todo *requests.TodoRequest) (u
 	if err != nil {
 		return uuid.Nil, err
 	}
+	metrics.TasksCount.Inc()
 	return uuidField, nil
 }
 

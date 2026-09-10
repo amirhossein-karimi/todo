@@ -15,11 +15,14 @@ import (
 	"github.com/amirhossein-karimi/todo/internal/db"
 	"github.com/amirhossein-karimi/todo/internal/handler"
 	"github.com/amirhossein-karimi/todo/internal/logger"
+	"github.com/amirhossein-karimi/todo/internal/metrics"
+	"github.com/amirhossein-karimi/todo/internal/middleware"
 	"github.com/amirhossein-karimi/todo/internal/repository"
 	"github.com/amirhossein-karimi/todo/internal/service"
 	"github.com/amirhossein-karimi/todo/internal/validation"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -63,6 +66,11 @@ var serveCmd = &cobra.Command{
 
 		todoSvc := service.NewTodoService(todoRepository, cache)
 		h := handler.NewHandler(todoSvc, log)
+		metrics.Register()
+
+		group.Use(middleware.Prometheus())
+
+		r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
 		group.POST("/create", h.Create)
 		group.GET("/list", h.List)
