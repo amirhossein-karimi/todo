@@ -12,6 +12,7 @@ import (
 type TodoRepository interface {
 	Create(ctx context.Context, todo *models.Todo) (uuid.UUID, error)
 	FindByTitle(ctx context.Context, title string) (*models.Todo, error)
+	FindByUUID(ctx context.Context, uuid uuid.UUID) (*models.Todo, error)
 	List(ctx context.Context, page int, status string, priority string, assignee string) ([]*models.Todo, int64, error)
 	Delete(ctx context.Context, uuid uuid.UUID) error
 }
@@ -24,6 +25,17 @@ func NewTodoRepository(db *gorm.DB) TodoRepository {
 	return &todoRepository{
 		db: db,
 	}
+}
+
+
+
+func (r *todoRepository) FindByUUID(ctx context.Context, uuid uuid.UUID) (*models.Todo, error) {
+	var todo models.Todo
+	err := r.db.WithContext(ctx).Where("uuid = ?", uuid).First(&todo).Error
+	if err != nil {
+		return nil, err
+	}
+	return &todo, nil
 }
 
 func (r *todoRepository) Delete(ctx context.Context, uuid uuid.UUID) error {

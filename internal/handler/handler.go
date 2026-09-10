@@ -17,6 +17,7 @@ type Handler interface {
 	Create(ctx *gin.Context)
 	List(ctx *gin.Context)
 	Delete(ctx *gin.Context)
+	GetInfo(ctx *gin.Context)
 }
 
 type handler struct {
@@ -158,6 +159,52 @@ func (h *handler) Delete(ctx *gin.Context) {
 		"Todo deleted successfully",
 		"success",
 		nil,
+		nil,
+	)
+
+	ctx.JSON(http.StatusOK, res)
+}
+
+// GetInfo godoc
+// @Summary      Get todo info
+// @Description  Get a todo by UUID
+// @Tags         Todos
+// @Produce      json
+// @Param        uuid  path  string  true  "Todo UUID"
+// @Success      200  {object} response.response
+// @Failure      400  {object} response.response
+// @Failure      404  {object} response.response
+// @Failure      500  {object} response.response
+// @Router       /api/v1/todo/{uuid} [get]
+func (h *handler) GetInfo(ctx *gin.Context) {
+	uuidParam := ctx.Param("uuid")
+	if uuidParam == "" {
+		h.logger.Error("UUID parameter is missing")
+		errors.HandleError(ctx, errors.ErrTodoNotFound)
+		return
+	}
+
+	uuid, err := uuid.Parse(uuidParam)
+	if err != nil {
+		h.logger.Error("Invalid UUID format", zap.Error(err))
+		errors.HandleError(ctx, err)
+		return
+	}
+
+	todo, err := h.todoSvc.GetInfo(ctx, uuid)
+	if err != nil {
+		h.logger.Error("Failed to get todo info", zap.Error(err))
+		errors.HandleError(ctx, err)
+		return
+	}
+
+	res := response.CreateResponse(
+		http.StatusOK,
+		"Todo retrieved successfully",
+		"success",
+		map[string]interface{}{
+			"todo": todo,
+		},
 		nil,
 	)
 

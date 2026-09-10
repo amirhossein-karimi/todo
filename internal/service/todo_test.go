@@ -53,6 +53,21 @@ func (m *mockTodoRepository) FindByTitle(
 	return todo, args.Error(1)
 }
 
+func (m *mockTodoRepository) FindByUUID(
+	ctx context.Context,
+	uuid uuid.UUID,
+) (*models.Todo, error) {
+	args := m.Called(ctx, uuid)
+
+	var todo *models.Todo
+
+	if args.Get(0) != nil {
+		todo = args.Get(0).(*models.Todo)
+	}
+
+	return todo, args.Error(1)
+}
+
 func (m *mockTodoRepository) Delete(ctx context.Context, uuid uuid.UUID) error {
 	args := m.Called(ctx, uuid)
 	return args.Error(0)

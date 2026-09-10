@@ -34,6 +34,37 @@ info:
   title: Todo API
   version: "1.0"
 paths:
+  /api/v1/todo/{uuid}:
+    get:
+      description: Get a todo by UUID
+      parameters:
+      - description: Todo UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.response'
+      summary: Get todo info
+      tags:
+      - Todos
   /api/v1/todo/create:
     post:
       consumes:

@@ -19,6 +19,7 @@ type TodoService interface {
 	Create(ctx context.Context, todo *requests.TodoRequest) (uuid.UUID, error)
 	List(ctx context.Context, page int, status string, priority string, assignee string) ([]*models.Todo, int64, error)
 	Delete(ctx context.Context, uuid uuid.UUID) error
+	GetInfo(ctx context.Context, uuid uuid.UUID) (*models.Todo, error)
 }
 
 type todoService struct {
@@ -31,6 +32,18 @@ func NewTodoService(repo repository.TodoRepository, cache cache.Cache) TodoServi
 		repo:  repo,
 		cache: cache,
 	}
+}
+
+func (s *todoService) GetInfo(ctx context.Context, uuid uuid.UUID) (*models.Todo, error) {
+	todo, err := s.repo.FindByUUID(ctx, uuid)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.ErrTodoNotFound
+		}
+		return nil, err
+	}
+
+	return todo, nil
 }
 
 func (s *todoService) Delete(ctx context.Context, uuid uuid.UUID) error {
