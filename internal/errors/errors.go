@@ -14,4 +14,8 @@ var (
 		Message: "todo with this title already exists",
 		Code:    409,
 	}
+	ErrTodoNotFound = &AppError{
+		Message: "todo not found",
+		Code:    404,
+	}
 )

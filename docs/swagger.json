@@ -55,6 +55,56 @@
                 }
             }
         },
+        "/api/v1/todo/delete/{uuid}": {
+            "delete": {
+                "description": "Delete a todo by UUID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Todos"
+                ],
+                "summary": "Delete todo",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Todo UUID",
+                        "name": "uuid",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.response"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/todo/list": {
             "get": {
                 "description": "Get a paginated list of todos",

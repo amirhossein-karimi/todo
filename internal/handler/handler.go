@@ -9,12 +9,14 @@ import (
 	"github.com/amirhossein-karimi/todo/internal/response"
 	"github.com/amirhossein-karimi/todo/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
 type Handler interface {
 	Create(ctx *gin.Context)
 	List(ctx *gin.Context)
+	Delete(ctx *gin.Context)
 }
 
 type handler struct {
@@ -105,6 +107,51 @@ func (h *handler) List(ctx *gin.Context) {
 			"todos": todos,
 			"total": total,
 		},
+		nil,
+	)
+
+	ctx.JSON(http.StatusOK, res)
+}
+
+// Delete godoc
+// @Summary      Delete todo
+// @Description  Delete a todo by UUID
+// @Tags         Todos
+// @Accept       json
+// @Produce      json
+// @Param        uuid  path      string  true  "Todo UUID"
+// @Success      200   {object}  response.response
+// @Failure      400   {object}  response.response
+// @Failure      404   {object}  response.response
+// @Failure      500   {object}  response.response
+// @Router       /api/v1/todo/delete/{uuid} [delete]
+func (h *handler) Delete(ctx *gin.Context) {
+	uuidParam := ctx.Param("uuid")
+	if uuidParam == "" {
+		h.logger.Error("UUID parameter is missing")
+		errors.HandleError(ctx, errors.ErrTodoNotFound)
+		return
+	}
+
+	uuid, err := uuid.Parse(uuidParam)
+	if err != nil {
+		h.logger.Error("Invalid UUID format", zap.Error(err))
+		errors.HandleError(ctx, err)
+		return
+	}
+
+	err = h.todoSvc.Delete(ctx, uuid)
+	if err != nil {
+		h.logger.Error("Failed to delete todo", zap.Error(err))
+		errors.HandleError(ctx, err)
+		return
+	}
+
+	res := response.CreateResponse(
+		http.StatusOK,
+		"Todo deleted successfully",
+		"success",
+		nil,
 		nil,
 	)
 

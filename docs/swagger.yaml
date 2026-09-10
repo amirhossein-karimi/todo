@@ -61,6 +61,39 @@ paths:
       summary: Create a new todo
       tags:
       - Todos
+  /api/v1/todo/delete/{uuid}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a todo by UUID
+      parameters:
+      - description: Todo UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.response'
+      summary: Delete todo
+      tags:
+      - Todos
   /api/v1/todo/list:
     get:
       consumes:

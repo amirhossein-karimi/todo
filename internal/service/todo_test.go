@@ -53,6 +53,11 @@ func (m *mockTodoRepository) FindByTitle(
 	return todo, args.Error(1)
 }
 
+func (m *mockTodoRepository) Delete(ctx context.Context, uuid uuid.UUID) error {
+	args := m.Called(ctx, uuid)
+	return args.Error(0)
+}
+
 func (m *mockTodoRepository) Create(
 	ctx context.Context,
 	todo *models.Todo,
@@ -162,6 +167,70 @@ func TestTodoService_Create(t *testing.T) {
 			assert.Equal(t, tt.createResult, result)
 
 			repo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestTodoService_Delete(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		uuid        uuid.UUID
+		deleteErr   error
+		cacheErr    error
+		expectedErr error
+	}{
+		{
+			name:        "should delete todo successfully",
+			uuid:        uuid.New(),
+			deleteErr:   nil,
+			cacheErr:    nil,
+			expectedErr: nil,
+		},
+		{
+			name:        "should return error when todo not found",
+			uuid:        uuid.New(),
+			deleteErr:   gorm.ErrRecordNotFound,
+			cacheErr:    nil,
+			expectedErr: errors.ErrTodoNotFound,
+		},
+		{
+			name:        "should return repository error",
+			uuid:        uuid.New(),
+			deleteErr:   gorm.ErrInvalidDB,
+			cacheErr:    nil,
+			expectedErr: gorm.ErrInvalidDB,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := new(mockTodoRepository)
+			cache := new(mockCache)
+
+			service := NewTodoService(repo, cache)
+
+			repo.
+				On("Delete", ctx, tt.uuid).
+				Return(tt.deleteErr).
+				Once()
+
+			if tt.deleteErr == nil {
+				key := realCache.CreateKeyName(realCache.TodosKey, "*")
+
+				cache.
+					On("Delete", ctx, key).
+					Return(tt.cacheErr).
+					Once()
+			}
+
+			err := service.Delete(ctx, tt.uuid)
+
+			assert.ErrorIs(t, err, tt.expectedErr)
+
+			repo.AssertExpectations(t)
+			cache.AssertExpectations(t)
 		})
 	}
 }
