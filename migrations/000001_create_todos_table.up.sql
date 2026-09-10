@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS todos (
 
     description TEXT,
 
+    assignee VARCHAR(255) NOT NULL,
+
     priority smallint NOT NULL DEFAULT 0,
 
     status smallint NOT NULL DEFAULT 0,

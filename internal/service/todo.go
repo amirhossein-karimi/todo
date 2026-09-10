@@ -17,7 +17,7 @@ import (
 
 type TodoService interface {
 	Create(ctx context.Context, todo *requests.TodoRequest) (uuid.UUID, error)
-	List(ctx context.Context, page int) ([]*models.Todo, int64, error)
+	List(ctx context.Context, page int, status string, priority string, assignee string) ([]*models.Todo, int64, error)
 	Delete(ctx context.Context, uuid uuid.UUID) error
 }
 
@@ -70,6 +70,7 @@ func (s *todoService) Create(ctx context.Context, todo *requests.TodoRequest) (u
 		Title:       todo.Title,
 		Description: todo.Description,
 		Priority:    todo.Priority,
+		Assignee:    todo.Assignee,
 		Status:      models.TodoStatusTodo,
 		UUID:        uuidData,
 		ToDoStartAt: &now,
@@ -90,10 +91,10 @@ func (s *todoService) Create(ctx context.Context, todo *requests.TodoRequest) (u
 	return uuidField, nil
 }
 
-func (s *todoService) List(ctx context.Context, page int) ([]*models.Todo, int64, error) {
+func (s *todoService) List(ctx context.Context, page int, status string, priority string, assignee string) ([]*models.Todo, int64, error) {
 	const ttl = 10 * time.Minute
 
-	key := cache.CreateKeyName(cache.TodosKey, "page", page)
+	key := cache.CreateKeyName(cache.TodosKey, "page", page, "status", status, "priority", priority, "assignee", assignee)
 	totalKey := cache.CreateKeyName(cache.TodosKey, "total")
 
 	var todos []*models.Todo
@@ -105,13 +106,14 @@ func (s *todoService) List(ctx context.Context, page int) ([]*models.Todo, int64
 		}
 	}
 
-	todos, total, err := s.repo.List(ctx, page)
+	todos, total, err := s.repo.List(ctx, page, status, priority, assignee)
 	if err != nil {
 		return nil, 0, err
 	}
-
-	_ = s.cache.Set(ctx, key, todos, ttl)
-	_ = s.cache.Set(ctx, totalKey, total, ttl)
+	if len(todos) > 0 {
+		_ = s.cache.Set(ctx, key, todos, ttl)
+		_ = s.cache.Set(ctx, totalKey, total, ttl)
+	}
 
 	return todos, total, nil
 }

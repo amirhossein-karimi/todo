@@ -2,6 +2,8 @@ basePath: /
 definitions:
   requests.TodoRequest:
     properties:
+      assignee:
+        type: string
       description:
         type: string
       priority:
@@ -9,6 +11,7 @@ definitions:
       title:
         type: string
     required:
+    - assignee
     - description
     - priority
     - title
@@ -96,9 +99,7 @@ paths:
       - Todos
   /api/v1/todo/list:
     get:
-      consumes:
-      - application/json
-      description: Get a paginated list of todos
+      description: Get a paginated list of todos with optional filters
       parameters:
       - default: 1
         description: Page number
@@ -106,6 +107,20 @@ paths:
         minimum: 1
         name: page
         type: integer
+      - default: "0"
+        description: Todo status
+        in: query
+        name: status
+        type: string
+      - default: "1"
+        description: Todo priority
+        in: query
+        name: priority
+        type: string
+      - description: Todo assignee
+        in: query
+        name: assignee
+        type: string
       produces:
       - application/json
       responses:

@@ -113,10 +113,7 @@ const docTemplate = `{
         },
         "/api/v1/todo/list": {
             "get": {
-                "description": "Get a paginated list of todos",
-                "consumes": [
-                    "application/json"
-                ],
+                "description": "Get a paginated list of todos with optional filters",
                 "produces": [
                     "application/json"
                 ],
@@ -131,6 +128,26 @@ const docTemplate = `{
                         "default": 1,
                         "description": "Page number",
                         "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "0",
+                        "description": "Todo status",
+                        "name": "status",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "1",
+                        "description": "Todo priority",
+                        "name": "priority",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Todo assignee",
+                        "name": "assignee",
                         "in": "query"
                     }
                 ],
@@ -161,11 +178,15 @@ const docTemplate = `{
         "requests.TodoRequest": {
             "type": "object",
             "required": [
+                "assignee",
                 "description",
                 "priority",
                 "title"
             ],
             "properties": {
+                "assignee": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },

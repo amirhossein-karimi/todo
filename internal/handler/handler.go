@@ -73,17 +73,23 @@ func (h *handler) Create(ctx *gin.Context) {
 
 // List godoc
 // @Summary      List todos
-// @Description  Get a paginated list of todos
+// @Description  Get a paginated list of todos with optional filters
 // @Tags         Todos
-// @Accept       json
 // @Produce      json
-// @Param        page  query     int  false  "Page number"  default(1) minimum(1)
-// @Success      200   {object}  response.response
-// @Failure      400   {object}  response.response
-// @Failure      500   {object}  response.response
+// @Param        page      query  int     false  "Page number"       default(1) minimum(1)
+// @Param        status    query  string  false  "Todo status"       default(0)
+// @Param        priority  query  string  false  "Todo priority"     default(1)
+// @Param        assignee  query  string  false  "Todo assignee"
+// @Success      200       {object} response.response
+// @Failure      400       {object} response.response
+// @Failure      500       {object} response.response
 // @Router       /api/v1/todo/list [get]
 func (h *handler) List(ctx *gin.Context) {
 	page := ctx.DefaultQuery("page", "1")
+
+	status := ctx.DefaultQuery("status", "0")
+	priority := ctx.DefaultQuery("priority", "1")
+	assignee := ctx.DefaultQuery("assignee", "")
 
 	pageInt, err := strconv.Atoi(page)
 	if err != nil || pageInt < 1 {
@@ -92,7 +98,7 @@ func (h *handler) List(ctx *gin.Context) {
 		return
 	}
 
-	todos, total, err := h.todoSvc.List(ctx, pageInt)
+	todos, total, err := h.todoSvc.List(ctx, pageInt, status, priority, assignee)
 	if err != nil {
 		h.logger.Error("Failed to list todos", zap.Error(err))
 		errors.HandleError(ctx, err)

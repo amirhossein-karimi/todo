@@ -67,8 +67,8 @@ func (m *mockTodoRepository) Create(
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
-func (m *mockTodoRepository) List(ctx context.Context, page int) ([]*models.Todo, int64, error) {
-	args := m.Called(ctx, page)
+func (m *mockTodoRepository) List(ctx context.Context, page int, status string, priority string, assignee string) ([]*models.Todo, int64, error) {
+	args := m.Called(ctx, page, status, priority, assignee)
 
 	var todos []*models.Todo
 	if args.Get(0) != nil {
@@ -97,6 +97,7 @@ func TestTodoService_Create(t *testing.T) {
 			req: &requests.TodoRequest{
 				Title:       "Learn Go",
 				Description: "Learn Go testing",
+				Assignee:    "John Doe",
 				Priority:    1,
 			},
 			findByTitleResult: nil,
@@ -109,6 +110,7 @@ func TestTodoService_Create(t *testing.T) {
 			req: &requests.TodoRequest{
 				Title:       "Learn Go",
 				Description: "Testing Go",
+				Assignee:    "John Doe",
 				Priority:    1,
 			},
 			findByTitleResult: &models.Todo{

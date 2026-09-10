@@ -12,7 +12,7 @@ import (
 type TodoRepository interface {
 	Create(ctx context.Context, todo *models.Todo) (uuid.UUID, error)
 	FindByTitle(ctx context.Context, title string) (*models.Todo, error)
-	List(ctx context.Context, page int) ([]*models.Todo, int64, error)
+	List(ctx context.Context, page int, status string, priority string, assignee string) ([]*models.Todo, int64, error)
 	Delete(ctx context.Context, uuid uuid.UUID) error
 }
 
@@ -37,7 +37,7 @@ func (r *todoRepository) Delete(ctx context.Context, uuid uuid.UUID) error {
 	return nil
 }
 
-func (r *todoRepository) List(ctx context.Context, page int) ([]*models.Todo, int64, error) {
+func (r *todoRepository) List(ctx context.Context, page int, status string, priority string, assignee string) ([]*models.Todo, int64, error) {
 
 	const pageSize = 10
 
@@ -45,6 +45,16 @@ func (r *todoRepository) List(ctx context.Context, page int) ([]*models.Todo, in
 	var total int64
 
 	db := r.db.WithContext(ctx).Model(&models.Todo{})
+
+	if status != "" {
+		db = db.Where("status = ?", status)
+	}
+	if priority != "" {
+		db = db.Where("priority = ?", priority)
+	}
+	if assignee != "" {
+		db = db.Where("assignee = ?", assignee)
+	}
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
