@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/amirhossein-karimi/todo/internal/errors"
 	"github.com/amirhossein-karimi/todo/internal/requests"
@@ -13,6 +14,7 @@ import (
 
 type Handler interface {
 	Create(ctx *gin.Context)
+	List(ctx *gin.Context)
 }
 
 type handler struct {
@@ -65,4 +67,46 @@ func (h *handler) Create(ctx *gin.Context) {
 	)
 
 	ctx.JSON(http.StatusCreated, res)
+}
+
+// List godoc
+// @Summary      List todos
+// @Description  Get a paginated list of todos
+// @Tags         Todos
+// @Accept       json
+// @Produce      json
+// @Param        page  query     int  false  "Page number"  default(1) minimum(1)
+// @Success      200   {object}  response.response
+// @Failure      400   {object}  response.response
+// @Failure      500   {object}  response.response
+// @Router       /api/v1/todo/list [get]
+func (h *handler) List(ctx *gin.Context) {
+	page := ctx.DefaultQuery("page", "1")
+
+	pageInt, err := strconv.Atoi(page)
+	if err != nil || pageInt < 1 {
+		h.logger.Error("failed to parse page parameter", zap.Error(err))
+		errors.HandleError(ctx, err)
+		return
+	}
+
+	todos, total, err := h.todoSvc.List(ctx, pageInt)
+	if err != nil {
+		h.logger.Error("Failed to list todos", zap.Error(err))
+		errors.HandleError(ctx, err)
+		return
+	}
+
+	res := response.CreateResponse(
+		http.StatusOK,
+		"Todos retrieved successfully",
+		"success",
+		map[string]interface{}{
+			"todos": todos,
+			"total": total,
+		},
+		nil,
+	)
+
+	ctx.JSON(http.StatusOK, res)
 }

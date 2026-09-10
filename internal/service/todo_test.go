@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
+	realCache "github.com/amirhossein-karimi/todo/internal/cache"
 	"github.com/amirhossein-karimi/todo/internal/errors"
 	"github.com/amirhossein-karimi/todo/internal/models"
 	"github.com/amirhossein-karimi/todo/internal/requests"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -28,13 +28,13 @@ func (m *mockCache) Set(ctx context.Context, key string, value interface{}, ttl 
 	return args.Error(0)
 }
 
-func (m *mockCache) Get(ctx context.Context, key string) (interface{}, error) {
-	args := m.Called(ctx, key)
-	return args.Get(0), args.Error(1)
+func (m *mockCache) Get(ctx context.Context, key string, dest interface{}) error {
+	args := m.Called(ctx, key, dest)
+	return args.Error(0)
 }
 
-func (m *mockCache) Delete(ctx context.Context, key string) error {
-	args := m.Called(ctx, key)
+func (m *mockCache) Delete(ctx context.Context, pattern string) error {
+	args := m.Called(ctx, pattern)
 	return args.Error(0)
 }
 
@@ -60,6 +60,17 @@ func (m *mockTodoRepository) Create(
 	args := m.Called(ctx, todo)
 
 	return args.Get(0).(uuid.UUID), args.Error(1)
+}
+
+func (m *mockTodoRepository) List(ctx context.Context, page int) ([]*models.Todo, int64, error) {
+	args := m.Called(ctx, page)
+
+	var todos []*models.Todo
+	if args.Get(0) != nil {
+		todos = args.Get(0).([]*models.Todo)
+	}
+
+	return todos, args.Get(1).(int64), args.Error(2)
 }
 
 func TestTodoService_Create(t *testing.T) {
@@ -115,7 +126,9 @@ func TestTodoService_Create(t *testing.T) {
 				On("FindByTitle", ctx, tt.req.Title).
 				Return(tt.findByTitleResult, tt.findByTitleErr)
 
-			cache.On("Delete", ctx, "todos").Return(nil)
+			realCache := realCache.CreateKeyName(realCache.TodosKey, "*")
+
+			cache.On("Delete", ctx, realCache).Return(nil)
 
 			if tt.findByTitleResult == nil {
 				repo.

@@ -12,8 +12,8 @@ import (
 
 type Cache interface {
 	Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error
-	Get(ctx context.Context, key string) (interface{}, error)
-	Delete(ctx context.Context, key string) error
+	Get(ctx context.Context, key string, dest interface{}) error
+	Delete(ctx context.Context, pattern string) error
 }
 
 type cache struct {
@@ -44,23 +44,40 @@ func (c *cache) Set(ctx context.Context, key string, value interface{}, ttl time
 	return nil
 }
 
-func (c *cache) Get(ctx context.Context, key string) (interface{}, error) {
-	data, err := c.rdb.Get(ctx, key).Bytes()
+func (c *cache) Get(ctx context.Context, key string, dest interface{}) error {
+	data, err := c.rdb.Get(ctx, key).Result()
 	if err != nil {
-		return nil, fmt.Errorf("get cache key %q: %w", key, err)
+		return fmt.Errorf("get cache key %q: %w", key, err)
 	}
 
-	var value interface{}
-	if err := json.Unmarshal(data, &value); err != nil {
-		return nil, fmt.Errorf("unmarshal cache value: %w", err)
+	if err := json.Unmarshal([]byte(data), dest); err != nil {
+		return fmt.Errorf("unmarshal cache key %q: %w", key, err)
 	}
 
-	return value, nil
+	return nil
 }
 
-func (c *cache) Delete(ctx context.Context, key string) error {
-	if err := c.rdb.Del(ctx, key).Err(); err != nil {
-		return fmt.Errorf("delete cache key %q: %w", key, err)
+func (c *cache) Delete(ctx context.Context, pattern string) error {
+	var cursor uint64
+
+	for {
+		keys, nextCursor, err := c.rdb.Scan(ctx, cursor, pattern, 100).Result()
+		if err != nil {
+			return fmt.Errorf("scan cache keys %q: %w", pattern, err)
+		}
+
+		if len(keys) > 0 {
+			if err := c.rdb.Del(ctx, keys...).Err(); err != nil {
+				return fmt.Errorf("delete cache keys %q: %w", pattern, err)
+			}
+		}
+
+		cursor = nextCursor
+
+		if cursor == 0 {
+			break
+		}
 	}
+
 	return nil
 }

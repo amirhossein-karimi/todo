@@ -12,6 +12,7 @@ import (
 type TodoRepository interface {
 	Create(ctx context.Context, todo *models.Todo) (uuid.UUID, error)
 	FindByTitle(ctx context.Context, title string) (*models.Todo, error)
+	List(ctx context.Context, page int) ([]*models.Todo, int64, error)
 }
 
 type todoRepository struct {
@@ -22,6 +23,32 @@ func NewTodoRepository(db *gorm.DB) TodoRepository {
 	return &todoRepository{
 		db: db,
 	}
+}
+
+func (r *todoRepository) List(ctx context.Context, page int) ([]*models.Todo, int64, error) {
+
+	const pageSize = 10
+
+	var todos []*models.Todo
+	var total int64
+
+	db := r.db.WithContext(ctx).Model(&models.Todo{})
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * pageSize
+
+	if err := db.
+		Order("id DESC").
+		Limit(pageSize).
+		Offset(offset).
+		Find(&todos).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return todos, total, nil
 }
 
 func (r *todoRepository) Create(ctx context.Context, todo *models.Todo) (uuid.UUID, error) {

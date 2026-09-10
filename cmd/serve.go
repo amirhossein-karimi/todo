@@ -58,12 +58,14 @@ var serveCmd = &cobra.Command{
 		}
 
 		group := r.Group("/api/v1/todo")
-		todoRepository := repository.NewTodoRepository(gormDB)
 		cache := cache.NewRedisCache(config)
+		todoRepository := repository.NewTodoRepository(gormDB)
+
 		todoSvc := service.NewTodoService(todoRepository, cache)
 		h := handler.NewHandler(todoSvc, log)
 
 		group.POST("/create", h.Create)
+		group.GET("/list", h.List)
 
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 		server := &http.Server{
