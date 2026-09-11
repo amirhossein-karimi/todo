@@ -79,13 +79,16 @@ var serveCmd = &cobra.Command{
 		group.PUT("/update/:uuid", h.Update)
 
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+		port := fmt.Sprintf(":%d", config.Server.Port)
+
 		server := &http.Server{
-			Addr:    ":8080",
+			Addr:    port,
 			Handler: r,
 		}
 
 		go func() {
-			fmt.Println("Server started on :8080")
+			fmt.Println("Server started on ", port)
 
 			if err := server.ListenAndServe(); err != nil &&
 				!errors.Is(err, http.ErrServerClosed) {
