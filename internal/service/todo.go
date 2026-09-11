@@ -11,6 +11,7 @@ import (
 	"github.com/amirhossein-karimi/todo/internal/models"
 	"github.com/amirhossein-karimi/todo/internal/repository"
 	"github.com/amirhossein-karimi/todo/internal/requests"
+	"github.com/amirhossein-karimi/todo/internal/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -20,6 +21,7 @@ type TodoService interface {
 	List(ctx context.Context, page int, status string, priority string, assignee string) ([]*models.Todo, int64, error)
 	Delete(ctx context.Context, uuid uuid.UUID) error
 	GetInfo(ctx context.Context, uuid uuid.UUID) (*models.Todo, error)
+	Update(ctx context.Context, uuid uuid.UUID, todo *requests.TodoUpdateRequest) (*models.Todo, error)
 }
 
 type todoService struct {
@@ -129,4 +131,51 @@ func (s *todoService) List(ctx context.Context, page int, status string, priorit
 	}
 
 	return todos, total, nil
+}
+
+func (s *todoService) Update(ctx context.Context, uuid uuid.UUID, update *requests.TodoUpdateRequest) (*models.Todo, error) {
+
+	todo, err := s.repo.FindByUUID(ctx, uuid)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.ErrTodoNotFound
+		}
+		return nil, err
+	}
+
+	todoModel, err := s.repo.FindByTitleExcludingUUID(ctx, uuid, utils.NilHandler(update.Title))
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	if todoModel != nil {
+		return nil, errors.ErrTodoWithThisTitleAlreadyExists
+	}
+
+	if update.Status != nil {
+		todo.ChangeStatus(utils.NilHandler(update.Status))
+	}
+
+	if update.Assignee != nil {
+		todo.Assignee = utils.NilHandler(update.Assignee)
+	}
+	if update.Description != nil {
+		todo.Description = utils.NilHandler(update.Description)
+	}
+	if update.Priority != nil {
+		todo.Priority = utils.NilHandler(update.Priority)
+	}
+	if update.Title != nil {
+		todo.Title = utils.NilHandler(update.Title)
+	}
+
+	model, err := s.repo.UpdateByUUID(ctx, uuid, todo)
+	if err != nil {
+		return nil, err
+	}
+
+	key := cache.CreateKeyName(cache.TodosKey, "*")
+	_ = s.cache.Delete(ctx, key)
+
+	return model, nil
 }

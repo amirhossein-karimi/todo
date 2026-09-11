@@ -18,6 +18,7 @@ type Handler interface {
 	List(ctx *gin.Context)
 	Delete(ctx *gin.Context)
 	GetInfo(ctx *gin.Context)
+	Update(ctx *gin.Context)
 }
 
 type handler struct {
@@ -209,4 +210,58 @@ func (h *handler) GetInfo(ctx *gin.Context) {
 	)
 
 	ctx.JSON(http.StatusOK, res)
+}
+
+// UpdateTodo godoc
+// @Summary      Update todo
+// @Description  Update a todo by UUID
+// @Tags         Todos
+// @Accept       json
+// @Produce      json
+// @Param        uuid  path  string  true  "Todo UUID"
+// @Param        request  body  requests.TodoUpdateRequest  true  "Todo update request"
+// @Success      200  {object} response.response
+// @Failure      400  {object} response.response
+// @Failure      404  {object} response.response
+// @Failure      409  {object} response.response
+// @Failure      500  {object} response.response
+// @Router       /api/v1/todo/update/{uuid} [put]
+func (h *handler) Update(ctx *gin.Context) {
+	uuidParam := ctx.Param("uuid")
+	if uuidParam == "" {
+		h.logger.Error("UUID parameter is missing")
+		errors.HandleError(ctx, errors.ErrTodoNotFound)
+		return
+	}
+
+	uuid, err := uuid.Parse(uuidParam)
+	if err != nil {
+		h.logger.Error("Invalid UUID format", zap.Error(err))
+		errors.HandleError(ctx, err)
+		return
+	}
+
+	var req requests.TodoUpdateRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		h.logger.Error("Failed to bind JSON", zap.Error(err))
+		errors.HandleError(ctx, err)
+		return
+	}
+
+	model, err := h.todoSvc.Update(ctx, uuid, &req)
+	if err != nil {
+		h.logger.Error("Failed to delete todo", zap.Error(err))
+		errors.HandleError(ctx, err)
+		return
+	}
+
+	res := response.CreateResponse(
+		http.StatusOK,
+		"Update successfully",
+		"success",
+		model,
+		nil,
+	)
+	ctx.JSON(http.StatusOK, res)
+
 }

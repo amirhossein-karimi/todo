@@ -33,3 +33,18 @@ type Todo struct {
 func (Todo) TableName() string {
 	return "todos"
 }
+
+func (t *Todo) ChangeStatus(newStatus int) {
+
+	t.Status = newStatus
+	now := time.Now()
+
+	switch newStatus {
+	case TodoStatusTodo:
+		t.ToDoStartAt = &now
+	case TodoStatusDoing:
+		t.DoStartAt = &now
+	case TodoStatusDone:
+		t.DoneStartAt = &now
+	}
+}

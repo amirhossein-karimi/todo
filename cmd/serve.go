@@ -76,6 +76,7 @@ var serveCmd = &cobra.Command{
 		group.GET("/list", h.List)
 		group.DELETE("/delete/:uuid", h.Delete)
 		group.GET("/:uuid", h.GetInfo)
+		group.PUT("/update/:uuid", h.Update)
 
 		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 		server := &http.Server{

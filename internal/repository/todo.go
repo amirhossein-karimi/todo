@@ -13,6 +13,8 @@ type TodoRepository interface {
 	Create(ctx context.Context, todo *models.Todo) (uuid.UUID, error)
 	FindByTitle(ctx context.Context, title string) (*models.Todo, error)
 	FindByUUID(ctx context.Context, uuid uuid.UUID) (*models.Todo, error)
+	FindByTitleExcludingUUID(ctx context.Context, uuid uuid.UUID, title string) (*models.Todo, error)
+	UpdateByUUID(ctx context.Context, uuid uuid.UUID, todo *models.Todo) (*models.Todo, error)
 	List(ctx context.Context, page int, status string, priority string, assignee string) ([]*models.Todo, int64, error)
 	Delete(ctx context.Context, uuid uuid.UUID) error
 }
@@ -27,7 +29,37 @@ func NewTodoRepository(db *gorm.DB) TodoRepository {
 	}
 }
 
+func (r *todoRepository) FindByTitleExcludingUUID(ctx context.Context, uuid uuid.UUID, title string) (*models.Todo, error) {
 
+	var todo models.Todo
+
+	err := r.db.WithContext(ctx).
+		Where("title = ? AND uuid != ?", title, uuid).
+		First(&todo).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &todo, nil
+}
+
+func (r *todoRepository) UpdateByUUID(ctx context.Context, uuid uuid.UUID, todo *models.Todo) (*models.Todo, error) {
+	result := r.db.WithContext(ctx).
+		Model(&models.Todo{}).
+		Where("uuid = ?", uuid).
+		Updates(todo)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+
+	return todo, nil
+}
 
 func (r *todoRepository) FindByUUID(ctx context.Context, uuid uuid.UUID) (*models.Todo, error) {
 	var todo models.Todo

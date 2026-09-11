@@ -16,6 +16,19 @@ definitions:
     - priority
     - title
     type: object
+  requests.TodoUpdateRequest:
+    properties:
+      assignee:
+        type: string
+      description:
+        type: string
+      priority:
+        type: integer
+      status:
+        type: integer
+      title:
+        type: string
+    type: object
   response.response:
     properties:
       code:
@@ -168,6 +181,49 @@ paths:
           schema:
             $ref: '#/definitions/response.response'
       summary: List todos
+      tags:
+      - Todos
+  /api/v1/todo/update/{uuid}:
+    put:
+      consumes:
+      - application/json
+      description: Update a todo by UUID
+      parameters:
+      - description: Todo UUID
+        in: path
+        name: uuid
+        required: true
+        type: string
+      - description: Todo update request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/requests.TodoUpdateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.response'
+      summary: Update todo
       tags:
       - Todos
 swagger: "2.0"
